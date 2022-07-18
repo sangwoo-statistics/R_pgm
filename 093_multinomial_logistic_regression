@@ -1,0 +1,37 @@
+library(sas7bdat)
+Ice_cream_data <- read.sas7bdat("d:/youtube_data/ice_cream.sas7bdat")
+
+#Exploratory Data Analysis
+plot(Ice_cream_data[,2:5])
+Ice_cream_data$FEMALE <- factor(Ice_cream_data$FEMALE)
+
+table(Ice_cream_data$ICE_CREAM, Ice_cream_data$FEMALE)
+
+library(ggplot2)
+ggplot(Ice_cream_data, aes(x=ICE_CREAM, y=VIDEO, fill=ICE_CREAM)) + geom_boxplot()
+ggplot(Ice_cream_data, aes(x=ICE_CREAM, y=PUZZLE, fill=ICE_CREAM)) + geom_boxplot() 
+
+#Multinomial Logistic Regression Analysis
+library(mlogit)
+head(Ice_cream_data)
+d1 <- mlogit.data(Ice_cream_data, shape="wide", choice="ICE_CREAM")
+head(d1)
+output1 <- mlogit(ICE_CREAM ~ 0 | FEMALE + VIDEO + PUZZLE , reflevel=3, data=d1)
+summary(output1)
+
+library(nnet)
+Ice_cream_data$ICE_CREAM <- as.factor(Ice_cream_data$ICE_CREAM)
+Ice_cream_data$ICE_CREAM <- relevel(Ice_cream_data$ICE_CREAM, ref='3')
+head(Ice_cream_data)
+output2 <- multinom(ICE_CREAM ~ FEMALE + VIDEO + PUZZLE, data=Ice_cream_data)
+summary(output2)
+
+predict(output2)
+table(Ice_cream_data$ICE_CREAM, predict(output2))
+
+library(DescTools)
+PseudoR2(output2, which=c("McFadden", "CoxSnell", "Nagelkerke"))
+help(PseudoR2)
+
+library(caret)
+confusionMatrix(table(Ice_cream_data$ICE_CREAM, predict(output2)))
